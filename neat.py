@@ -8,8 +8,9 @@ MAX_EDGE = 10
 PARENTS = 2
 POPULATION = 1000
 SURVIVORS = round(math.sqrt(POPULATION))
-MUTATION_RATE = 50
+MUTATION_RATE = 10
 BRANCH_FACTOR = SURVIVORS
+JUMP = 0.5
 
 
 #define more activation functions - softmax? swish? non linear cube?
@@ -20,7 +21,7 @@ def relu(x):
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-ACTIVATION_FUNCTIONS = [sigmoid, relu]
+ACTIVATION_FUNCTIONS = [relu, sigmoid]
 
 class Layer(): #TODO: ensure that the matrix multiplication is doable in intermediate layers e.g. of size n_nodesx1
     def __init__(self, n_nodes, input_size): #input will be nx1 array representing the node values of the previous layer, output will be layer * input
@@ -45,8 +46,8 @@ class Mind():
         for layer in self.hidden_layers:
             intermediate = layer.edges * input_v
             # apply activation function
-            for elem in intermediate:
-                elem = ACTIVATION_FUNCTIONS[self.activation](elem)
+            for (index,elem) in enumerate(intermediate):
+                intermediate[index] = ACTIVATION_FUNCTIONS[self.activation](elem)
             input_v = intermediate
         return input_v[0]
     
@@ -58,11 +59,14 @@ class Mind():
     # currently only changes the weights, to add in changing layers later
     def mutate(self):
         replica = copy.deepcopy(self)
+        
         for layer in replica.hidden_layers:
-            for weight in layer.edges:
+            for index in range(len(layer.edges)):
                 roll = random.randint(0,100)
                 if roll <= MUTATION_RATE:
-                    weight = random.uniform(0,1)
+                    current = layer.edges[index]
+                    layer.edges[index] = random.uniform(current - JUMP,current + JUMP)
+        
         return replica
         
 # use pickle library for data persistence
@@ -93,8 +97,8 @@ class Population():
 
     def train(self, data):
         self.next_gen(data)
-        while self.minds[0].fitness >= 0.25:
-            print(self.minds[-1].fitness)
+        while self.minds[0].fitness >= 0.1:
+            print(self.minds[0].fitness)
             self.next_gen(data)
     
 #define combination function with list of parents
