@@ -8,9 +8,9 @@ MAX_EDGE = 10
 PARENTS = 2
 POPULATION = 1000
 SURVIVORS = round(math.sqrt(POPULATION))
-MUTATION_RATE = 10
+MUTATION_RATE = 50
 BRANCH_FACTOR = SURVIVORS
-JUMP = 0.5
+JUMP = 1
 
 
 #define more activation functions - softmax? swish? non linear cube?
@@ -49,7 +49,8 @@ class Mind():
             for (index,elem) in enumerate(intermediate):
                 intermediate[index] = ACTIVATION_FUNCTIONS[self.activation](elem)
             input_v = intermediate
-        return input_v[0]
+        #return round(float(input_v))
+        return (float(input_v))
     
     def addLayer(self, output_size):
         input_size = self.hidden_layers[-2].output_size
@@ -74,6 +75,8 @@ class Population():
     def __init__(self, input_size, activation):
         self.minds = [Mind(input_size, activation) for _ in range(POPULATION)]
     
+    def prediction(self, input_v):
+        return self.minds[0].prediction(input_v + [1])
     
     def determine_fitness(self,data):
         for mind in self.minds:
