@@ -6,10 +6,56 @@ import imageio
 import sys
 import os
 
-# o0 = path = os.path.abspath("0")
-# o1 = path = os.path.abspath("1")
 
-# database = []
+params = [2,6,7,8,10]
+
+folder = path = os.path.abspath("titanic")
+data_loc = os.path.join(folder,"train.csv")
+data_fp = open(data_loc, "r")
+
+data_fp.readline()
+
+# database should be a list of tuples of the form (list,outcome)
+database = []
+
+for line in data_fp.readlines():
+    line = line.split(",")
+    ls = []
+    # print((line[2])+","+(line[6])+","+(line[7])+","+(line[8])+","+(line[10]))
+    for param in params:
+        if line[param] != "":
+            ls.append(float(line[param]))
+        else:
+            ls.append(float(0))
+    if line[12] != "\n":
+        ls.append(float(ord(line[12][0])))
+    else:
+        ls.append(float(0))
+    outcome = int(line[1])
+    database.append((ls, outcome))
+
+data_fp.close()
+
+test_data_loc = open(os.path.join(folder,"test.csv"))
+test_data_loc.readline()
+test_data = []
+
+for line in test_data_loc.readlines():
+    line = line.split(",")
+    ls = []
+    for param in params:
+        if line[param-1] != "":
+            ls.append(float(line[param-1]))
+        else:
+            ls.append(float(0))
+    if line[11] != "\n":
+        ls.append(float(ord(line[11][0])))
+    else:
+        ls.append(float(0))
+    test_data.append(ls)
+
+test_data_loc.close()
+
 
 # for img in os.listdir(o0):
     # loc = os.path.join(o0,img)
@@ -32,6 +78,7 @@ SURVIVORS = round(math.sqrt(POPULATION))
 MUTATION_RATE = 50
 BRANCH_FACTOR = SURVIVORS
 JUMP = 0.1
+ERROR_THRESHOLD = len(database)*0.0025
 
 #define more activation functions - softmax? swish? non linear cube?
 
@@ -124,7 +171,7 @@ class Population():
 
     def train(self, data):
         self.next_gen(data)
-        while self.minds[0].fitness >= 0.01:
+        while self.minds[0].fitness >= ERROR_THRESHOLD:
             print(self.minds[0].fitness)
             self.next_gen(data)
     
@@ -135,6 +182,18 @@ class Population():
 
 # define population as having a number of minds of a particular activation function
 
-# debugging dataset
-dataset = [([0,0],0),([0,1],1),([1,0],1),([1,1],0)]
-a = Population(2,0)
+# current model
+a = Population(6, 0)
+a.train(database)
+
+output_loc = open("output.csv","w")
+for case in test_data:
+    print(case)
+    val = a.prediction(case)
+    print(val)
+    if val > 0.5:
+        val = 1
+    else:
+        val = 0
+    output_loc.write(str(val)+"\n")
+output_loc.close()
